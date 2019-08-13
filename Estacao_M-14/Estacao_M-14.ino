@@ -114,7 +114,6 @@ void  medicoes(){
   //DHT22
   umid = dht.readHumidity();
   tempDHT22 = dht.readTemperature();
-  umid = (1.93837777*umid)-29.78518717;//Calibracao do DHT22
   umid = 1.00*umid+0.00; //Estabilizar com 2 casas
   
   //LM35
@@ -126,7 +125,7 @@ void  medicoes(){
   
   //BMP085
   pressao = bmp.readPressure()/100;
-  pressao = pressao/986.92;
+  pressao = pressao/986.92; //TRANSFORMA A PRESSAO EM ATM
   altitude = bmp.readAltitude();
   tempBMP085 = bmp.readTemperature();
   
