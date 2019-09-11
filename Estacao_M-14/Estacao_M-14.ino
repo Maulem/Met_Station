@@ -1,14 +1,17 @@
+#include <AirQuality.h>
 #include <Adafruit_BMP085.h>
 #include <LiquidCrystal_PCF8574.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
+
 
 //CONSTANTES//
 const int DHT_PIN = 2;
 const int lcd_address = 0x27;
 const int lcd_columns = 16;
 const int lcd_rows    = 2;
-const int animacoes = "sim"; //"sim" PARA ATIVAR AS ANIMACOES//
+const int pinochuva = A2;
+const int animacoes = "si"; //"sim" PARA ATIVAR AS ANIMACOES//
 const String serial = "on"; //"on" PARA ATIVAR O SERIAL PRINT//
 
 //VARIAVEIS//
@@ -27,6 +30,8 @@ float lump;
 String lumCE;
 float altitude;
 float temperatura;
+float chuva;
+int current_quality =-1;
 
 //OBJETO LCD//
 LiquidCrystal_PCF8574 lcd(lcd_address);
@@ -37,6 +42,8 @@ Adafruit_BMP085 bmp;
 //OBJETO DHT//
 DHT dht(DHT_PIN, DHT22);
 
+//OBJETO AIR//
+AirQuality airqualitysensor;
 
 void setup() {
   
@@ -53,6 +60,12 @@ void setup() {
   lcd.begin(lcd_columns, lcd_rows);
   lcd.setBacklight(100); //LIGA A LUZ DE FUNDO//
   Serial.println("System on!");
+
+  //INICIA o FC37 (CHUVA)//
+  pinMode(pinochuva, INPUT);
+  
+  //INICIA O AR Q.//
+  airqualitysensor.init(14);
   
   //TESTE BMP//
   if (bmp.begin()){
@@ -111,6 +124,24 @@ void loop() {
 //A FUNCAO medicoes SERVE PARA MEDIR TODOS OS DADOS//
 
 void  medicoes(){
+  //AR
+  current_quality=airqualitysensor.slope();
+  if (current_quality &gt;= 0)// if a valid data returned.
+    {
+        if (current_quality==0)
+        Serial.println("High pollution! Force signal active");
+        else if (current_quality==1)
+        Serial.println("High pollution!");
+        else if (current_quality==2)
+        Serial.println("Low pollution!");
+        else if (current_quality ==3)
+        Serial.println("Fresh air");
+    }
+  
+  //FC37
+  chuva = analogRead(pinochuva);
+  chuva = ((chuva-300)/725)*100;
+  
   //DHT22
   umid = dht.readHumidity();
   tempDHT22 = dht.readTemperature();
@@ -155,7 +186,7 @@ void serialPrint(){
     //LINHA 2//
     Serial.print("TempBMP: ");Serial.print(tempBMP085);Serial.print(" C //Pressao: ");Serial.print(pressao);Serial.println(" ATM");
     //LINHA 3//
-    Serial.print("TempLM: ");Serial.print(tempLM35);Serial.println(" C");
+    Serial.print("TempLM: ");Serial.print(tempLM35);Serial.print(" C");Serial.print(" //Chuva:");Serial.print(chuva);Serial.println(" %");
     //LINHA 4//
     Serial.print("Lum: ");Serial.print(lum);Serial.print("  // Lum%:");Serial.println(lump);
   }
