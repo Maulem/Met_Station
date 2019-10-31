@@ -21,7 +21,6 @@ float temp;
 float tempDHT22;
 int leitura_A0;
 float volt;
-float tempLM35;
 float pressao;
 float tempBMP085;
 float bin;
@@ -31,7 +30,11 @@ String lumCE;
 float altitude;
 float temperatura;
 float chuva;
+float chuvar;
 int current_quality =-1;
+String chuvas = "Zero";
+int solo;
+String solos = "Seco";
 
 //OBJETO LCD//
 LiquidCrystal_PCF8574 lcd(lcd_address);
@@ -41,9 +44,6 @@ Adafruit_BMP085 bmp;
 
 //OBJETO DHT//
 DHT dht(DHT_PIN, DHT22);
-
-//OBJETO AIR//
-AirQuality airqualitysensor;
 
 void setup() {
   
@@ -63,9 +63,9 @@ void setup() {
 
   //INICIA o FC37 (CHUVA)//
   pinMode(pinochuva, INPUT);
-  
-  //INICIA O AR Q.//
-  airqualitysensor.init(14);
+
+  //INICIA o SOLO//
+  pinMode(A3, INPUT);
   
   //TESTE BMP//
   if (bmp.begin()){
@@ -89,6 +89,20 @@ void loop() {
     lcd.print(" Umidade do ar:          ");
     lcd.setCursor(0,1);
     lcd.print("    ");lcd.print(umid);lcd.print(" %         ");
+  delay(Clock);
+    medicoes();
+    serialPrint();
+    lcd.setCursor(0,0);
+    lcd.print("Chance de chuva:          ");
+    lcd.setCursor(0,1);
+    lcd.print("  ");lcd.print(chuva);lcd.print(" % ");lcd.print(chuvas);
+  delay(Clock);
+    medicoes();
+    serialPrint();
+    lcd.setCursor(0,0);
+    lcd.print("Umidade do solo:          ");
+    lcd.setCursor(0,1);
+    lcd.print("   ");lcd.print(solo);lcd.print(" %  ");lcd.print(solos);
   delay(Clock);
     medicoes();
     serialPrint();
@@ -124,36 +138,38 @@ void loop() {
 //A FUNCAO medicoes SERVE PARA MEDIR TODOS OS DADOS//
 
 void  medicoes(){
-  //AR
-  current_quality=airqualitysensor.slope();
-  if (current_quality &gt;= 0)// if a valid data returned.
-    {
-        if (current_quality==0)
-        Serial.println("High pollution! Force signal active");
-        else if (current_quality==1)
-        Serial.println("High pollution!");
-        else if (current_quality==2)
-        Serial.println("Low pollution!");
-        else if (current_quality ==3)
-        Serial.println("Fresh air");
-    }
+  //SOLO
+  solo = analogRead(A3);
+  solo = map(solo,550,0,0,100);
+  solo = solo+100;
+  if (solo >= 50) {
+    solos = "Umido         ";
+  }
+  if (solo < 50) {
+    solos = "Seco         ";
+  }
   
   //FC37
-  chuva = analogRead(pinochuva);
-  chuva = ((chuva-300)/725)*100;
+  chuvar = analogRead(pinochuva);
+  chuva = ((chuvar-300)/725)*100;
+  chuva = (chuva-100) * -1;
+  if (chuva < 20) {
+    chuvas = " Zero      ";
+  }
+  if (chuva >= 20){
+    if (chuva < 50){
+      chuvas = "Fraca        ";
+    }
+  }
+  if (chuva >= 50) {
+    chuvas = "Forte        ";
+  }
   
   //DHT22
   umid = dht.readHumidity();
   tempDHT22 = dht.readTemperature();
   umid = 1.00*umid+0.00; //Estabilizar com 2 casas
-  
-  //LM35
-  delay(100);
-  leitura_A0 = analogRead(A0);
-  volt = leitura_A0 * (5.0f /1023);
-  temp = volt * 100.0;
-  tempLM35 = 1.00* temp +0.00;//Estabilizar com 2 casas
-  
+    
   //BMP085
   pressao = bmp.readPressure()/100;
   pressao = pressao/986.92; //TRANSFORMA A PRESSAO EM ATM
@@ -173,7 +189,7 @@ void  medicoes(){
     lumCE = "Escuro";
     }
   //TEMPERATURA MÉDIA
-  temperatura = (tempBMP085 + tempDHT22 + tempLM35) / 3;
+  temperatura = (tempBMP085 + tempDHT22) / 2;
   
 }
 //A FUNCAO serialPrint SERVE PARA PLOTAR NO MONITOR SERIAL PARA TESTES DOS SENSORES//
@@ -186,9 +202,9 @@ void serialPrint(){
     //LINHA 2//
     Serial.print("TempBMP: ");Serial.print(tempBMP085);Serial.print(" C //Pressao: ");Serial.print(pressao);Serial.println(" ATM");
     //LINHA 3//
-    Serial.print("TempLM: ");Serial.print(tempLM35);Serial.print(" C");Serial.print(" //Chuva:");Serial.print(chuva);Serial.println(" %");
+    Serial.print("Chuva R: ");Serial.print(chuvar);Serial.print(" ");Serial.print(" //Chuva:");Serial.print(chuva);Serial.println(" %");
     //LINHA 4//
-    Serial.print("Lum: ");Serial.print(lum);Serial.print("  // Lum%:");Serial.println(lump);
+    Serial.print("Lum: ");Serial.print(lum);Serial.print("  // Lum%:");Serial.print(lump);Serial.print("  // Solo:");Serial.println(solo);
   }
   else { Serial.println("Serial off");}
 }
