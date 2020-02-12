@@ -1,4 +1,6 @@
-#include <AirQuality.h>
+//**********************************
+//CRIADO POR MAULEM
+
 #include <Adafruit_BMP085.h>
 #include <LiquidCrystal_PCF8574.h>
 #include <Adafruit_Sensor.h>
@@ -31,7 +33,6 @@ float altitude;
 float temperatura;
 float chuva;
 float chuvar;
-int current_quality =-1;
 String chuvas = "Zero";
 int solo;
 String solos = "Seco";
@@ -44,6 +45,7 @@ Adafruit_BMP085 bmp;
 
 //OBJETO DHT//
 DHT dht(DHT_PIN, DHT22);
+
 
 void setup() {
   
@@ -86,9 +88,22 @@ void loop() {
     medicoes();
     serialPrint();
     lcd.setCursor(0,0);
-    lcd.print(" Umidade do ar:          ");
+    lcd.print(temperatura);
+    lcd.setCursor(5,0);lcd.print(" *C|");
+    lcd.print(" Umid: ");lcd.print(umid);lcd.setCursor(18,0);lcd.print(" %");
     lcd.setCursor(0,1);
-    lcd.print("    ");lcd.print(umid);lcd.print(" %         ");
+    lcd.print("Chance de chuva: ");lcd.print(chuvas);
+    
+
+
+
+
+
+
+
+
+    delay(Clock);
+    delay(Clock);
   delay(Clock);
     medicoes();
     serialPrint();
@@ -104,12 +119,7 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print("   ");lcd.print(solo);lcd.print(" %  ");lcd.print(solos);
   delay(Clock);
-    medicoes();
-    serialPrint();
-    lcd.setCursor(0,0);
-    lcd.print("  Temperatura:    ");
-    lcd.setCursor(0,1);
-    lcd.print("  ");lcd.print(temperatura);lcd.print(" Celsius");
+
   delay(Clock);
     medicoes();
     serialPrint();
